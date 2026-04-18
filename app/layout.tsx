@@ -43,7 +43,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${pressStart.variable} ${vt323.variable} h-full antialiased`}
     >
-      <body className="relative min-h-full flex flex-col bg-arcade-cream text-arcade-ink dark:bg-arcade-dark dark:text-arcade-cream">
+      <body className="relative min-h-full flex flex-col overflow-x-hidden bg-arcade-cream text-arcade-ink dark:bg-arcade-dark dark:text-arcade-cream">
         <Scanlines />
         <AliaskitBanner />
         {children}

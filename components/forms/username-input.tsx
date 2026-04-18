@@ -23,17 +23,17 @@ export function UsernameInput({
   const [touched, setTouched] = useState(false);
   const valid = value === "" ? null : GITHUB_LOGIN_RE.test(value);
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("space-y-2 min-w-0", className)}>
       <label
         htmlFor={id}
         className="block font-pixel text-[10px] uppercase tracking-widest"
       >
         GitHub username
       </label>
-      <div className="flex items-stretch pixel-border bg-arcade-cream dark:bg-arcade-dark-soft">
+      <div className="flex items-stretch w-full min-w-0 pixel-border bg-arcade-cream dark:bg-arcade-dark-soft">
         <span
           aria-hidden
-          className="flex items-center px-3 font-pixel text-[10px] uppercase opacity-70 border-r-2 border-arcade-ink dark:border-arcade-cream"
+          className="flex items-center shrink-0 px-2 sm:px-3 font-pixel text-[9px] sm:text-[10px] uppercase opacity-70 border-r-2 border-arcade-ink dark:border-arcade-cream"
         >
           github.com/
         </span>
@@ -50,7 +50,7 @@ export function UsernameInput({
           spellCheck={false}
           autoCapitalize="none"
           autoComplete="off"
-          className="flex-1 bg-transparent px-3 py-3 font-score text-2xl text-arcade-ink dark:text-arcade-cream placeholder:opacity-40 outline-none"
+          className="flex-1 min-w-0 w-full bg-transparent px-3 py-3 font-score text-lg sm:text-2xl text-arcade-ink dark:text-arcade-cream placeholder:opacity-40 outline-none"
           maxLength={39}
         />
       </div>
