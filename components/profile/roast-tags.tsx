@@ -1,5 +1,6 @@
 import type { RoastTag } from "@/lib/mock";
 import { cn } from "@/lib/utils";
+import { BuiltWithAliaskitCard } from "@/components/aliaskit/built-with-card";
 
 const FLAVORS: Record<RoastTag["flavor"], string> = {
   red: "bg-arcade-red text-arcade-cream",
@@ -23,6 +24,7 @@ export function RoastTags({ roasts }: { roasts: RoastTag[] }) {
           <p className="text-xs leading-snug">{r.body}</p>
         </div>
       ))}
+      <BuiltWithAliaskitCard />
     </div>
   );
 }

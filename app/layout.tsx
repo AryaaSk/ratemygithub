@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Press_Start_2P, VT323 } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Scanlines } from "@/components/arcade/scanlines";
 import { AliaskitBanner } from "@/components/aliaskit/banner";
@@ -29,7 +30,7 @@ const vt323 = VT323({
 export const metadata: Metadata = {
   title: "RATE MY GITHUB — arcade-grade developer scoring",
   description:
-    "Enter a GitHub username. Our sandboxed Claude agent scrapes the profile, scores it across 8 categories, and drops you on a permanent arcade leaderboard.",
+    "Enter a GitHub username. A three-pass AI pipeline reads your actual code, scores you across 6 rubric dimensions, and drops you on the permanent arcade leaderboard.",
 };
 
 export default function RootLayout({
@@ -46,6 +47,7 @@ export default function RootLayout({
         <Scanlines />
         <AliaskitBanner />
         {children}
+        <Analytics />
       </body>
     </html>
   );
