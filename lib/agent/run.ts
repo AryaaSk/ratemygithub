@@ -406,7 +406,14 @@ export async function runAgent(login: string): Promise<RunResult> {
     return { rating: mockRating(login), heatmapWindowDays: 365 };
   }
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+  const client = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY!,
+    // If Anthropic hangs on a call we'd rather fail that call and move on
+    // than watch Vercel kill the whole function at the 300s wall. 90s is
+    // long enough for Sonnet to complete a hard Pass 3.
+    timeout: 90_000,
+    maxRetries: 1,
+  });
   const usage = makeUsageAccumulator();
 
   log("start");

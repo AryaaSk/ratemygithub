@@ -15,7 +15,9 @@ import { runAgent } from "@/lib/agent/run";
 import { db, schema } from "@/lib/db/client";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+// 300s is the Vercel Pro ceiling. Our p50 is ~75s and p95 is ~105s, so we
+// need headroom beyond 60s or every slow profile 504s before finishing.
+export const maxDuration = 300;
 
 const BodySchema = z.object({
   login: z.string().min(1).max(39),
@@ -55,11 +57,11 @@ function friendlyError(raw: string): { code: string; userMessage: string } {
         "The grader returned an unusual response. Retry — this almost always works the second time.",
     };
   }
-  if (m.includes("timeout") || m.includes("aborted")) {
+  if (m.includes("timeout") || m.includes("aborted") || m.includes("504")) {
     return {
       code: "timeout",
       userMessage:
-        "Scoring took too long. This profile may be huge — retry or try a different account.",
+        "Scoring timed out. Anthropic or GitHub may be slow — retry in a minute, it usually works the second time.",
     };
   }
   if (m.includes("anthropic") || m.includes("overloaded")) {
