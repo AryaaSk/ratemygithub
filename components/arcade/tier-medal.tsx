@@ -75,14 +75,8 @@ export function TierMedal({ tier, size = 64, className, animate = false }: Props
             fontSize="5"
             fill="#1a1a1e"
           >
-            {def.tier === "S+" ? "S" : def.tier}
+            {def.tier}
           </text>
-          {def.tier === "S+" && (
-            <rect x="11" y="4" width="1" height="1" fill="#1a1a1e" />
-          )}
-          {def.tier === "S+" && (
-            <rect x="12" y="5" width="1" height="1" fill="#1a1a1e" />
-          )}
         </g>
       </svg>
     </div>

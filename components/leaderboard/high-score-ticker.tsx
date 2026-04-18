@@ -1,8 +1,8 @@
 import { tierForScore } from "@/lib/scoring/rubric";
-import { recentRows } from "@/lib/mock";
+import { recentRowsData } from "@/lib/data";
 
-export function HighScoreTicker() {
-  const rows = recentRows().slice(0, 12);
+export async function HighScoreTicker() {
+  const rows = (await recentRowsData()).slice(0, 12);
   const items = [...rows, ...rows]; // duplicated for seamless loop
   return (
     <div

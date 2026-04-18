@@ -1,0 +1,6 @@
+# E2B template manifest. Run `e2b template build` in this folder to publish.
+template_id = "ratemygithub-agent"
+dockerfile  = "e2b.Dockerfile"
+start_cmd   = "sleep infinity"    # sandbox idle until orchestrator runs a command
+cpu_count   = 1
+memory_mb   = 1024

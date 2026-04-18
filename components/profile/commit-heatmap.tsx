@@ -1,6 +1,8 @@
 type Props = {
   /** 52 × 7 grid, values 0..4 */
   weeks: number[][];
+  /** 365 when sourced from GraphQL, 90 when we fell back to public events. */
+  windowDays?: number;
 };
 
 const COLORS = [
@@ -11,13 +13,15 @@ const COLORS = [
   "#3a8d0b",
 ];
 
-export function CommitHeatmap({ weeks }: Props) {
+export function CommitHeatmap({ weeks, windowDays = 365 }: Props) {
   const total = weeks.flat().filter((n) => n > 0).length;
+  const label =
+    windowDays >= 365 ? "365-day commit heatmap" : `${windowDays}-day commit heatmap (public events only)`;
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="font-pixel text-[10px] uppercase tracking-widest opacity-80">
-          365-day commit heatmap
+          {label}
         </p>
         <p className="font-pixel text-[9px] uppercase opacity-60">
           {total} active days

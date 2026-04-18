@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Press_Start_2P, VT323 } from "next/font/google";
 import "./globals.css";
 import { Scanlines } from "@/components/arcade/scanlines";
+import { AliaskitBanner } from "@/components/aliaskit/banner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,6 +44,7 @@ export default function RootLayout({
     >
       <body className="relative min-h-full flex flex-col bg-arcade-cream text-arcade-ink dark:bg-arcade-dark dark:text-arcade-cream">
         <Scanlines />
+        <AliaskitBanner />
         {children}
       </body>
     </html>

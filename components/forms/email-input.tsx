@@ -11,20 +11,20 @@ type Props = {
 
 export function EmailInput({ value, onChange, className, id }: Props) {
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("flex items-center gap-2", className)}>
       <label
         htmlFor={id}
-        className="block font-pixel text-[9px] uppercase tracking-widest opacity-80"
+        className="font-pixel text-[8px] uppercase tracking-widest opacity-50 shrink-0"
       >
-        Email — optional · we&apos;ll tell you if you hit #1
+        optional email
       </label>
       <input
         id={id}
         type="email"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="you@wherever.dev"
-        className="w-full pixel-border-sm bg-arcade-cream dark:bg-arcade-dark-soft px-3 py-2 font-sans text-sm text-arcade-ink dark:text-arcade-cream placeholder:opacity-40 outline-none focus:outline-2 focus:outline-arcade-red focus:outline-offset-2"
+        placeholder="drop one if you want the #1 prize ping"
+        className="flex-1 bg-transparent border-b border-arcade-ink/20 dark:border-arcade-cream/20 px-0 py-1 font-sans text-xs text-arcade-ink dark:text-arcade-cream placeholder:opacity-40 outline-none focus:border-arcade-red"
       />
     </div>
   );

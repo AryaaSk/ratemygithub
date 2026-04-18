@@ -25,11 +25,14 @@ export function CategoryBars({ scores }: Props) {
                 style={{ width: `${v}%`, backgroundColor: t.color }}
               />
             </div>
-            <div className="flex items-baseline gap-1 min-w-[72px] justify-end">
-              <span className="font-score text-xl tabular-nums">
+            <div className="flex items-baseline gap-2 min-w-[72px] justify-end">
+              <span className="font-score text-xl tabular-nums text-arcade-ink dark:text-arcade-cream">
                 {Math.round(v)}
               </span>
-              <span className="font-pixel text-[9px]" style={{ color: t.color }}>
+              <span
+                className="font-pixel text-[9px] px-1.5 py-0.5 text-arcade-ink pixel-border-sm"
+                style={{ backgroundColor: t.color, boxShadow: "none" }}
+              >
                 {t.tier}
               </span>
             </div>

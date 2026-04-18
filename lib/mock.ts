@@ -8,6 +8,21 @@ export type RepoScore = {
   lastCommit: string; // ISO date
   score: number;
   summary: string;
+  // v3 per-repo scores — optional (v2 rows won't have them).
+  impact?: number;
+  quality?: number;
+  depth?: number;
+  impactEvidence?: string[];
+  qualityEvidence?: string[];
+  depthEvidence?: string[];
+  flags?: {
+    hasReadme: boolean;
+    hasTests: boolean;
+    hasCI: boolean;
+    hasLicense: boolean;
+    hasGitignore: boolean;
+    typedLang: boolean;
+  };
 };
 
 export type RoastTag = {
@@ -35,6 +50,8 @@ export type RatedUser = {
   tier: Tier;
   /** 0-100 per category */
   categoryScores: Record<CategoryKey, number>;
+  /** 2–5 evidence bullets per category, cited with specifics. */
+  categoryReasoning?: Partial<Record<CategoryKey, string[]>>;
   languages: LanguageSlice[];
   /** 52 weeks × 7 days grid, values 0..4 */
   heatmap: number[][];
@@ -91,13 +108,11 @@ export const MOCK_USERS: RatedUser[] = [
     joined: "2011-09-03",
     location: "Portland, OR",
     categoryScores: {
-      craft: 97,
-      consistency: 94,
-      originality: 99,
       impact: 100,
+      consistency: 94,
+      quality: 97,
       depth: 99,
       breadth: 72,
-      volume: 88,
       community: 86,
     },
     languages: [
@@ -186,13 +201,11 @@ export const MOCK_USERS: RatedUser[] = [
     joined: "2009-05-11",
     location: "Oslo, Norway",
     categoryScores: {
-      craft: 93,
-      consistency: 98,
-      originality: 86,
       impact: 96,
+      consistency: 98,
+      quality: 93,
       depth: 78,
       breadth: 92,
-      volume: 99,
       community: 96,
     },
     languages: [
@@ -280,13 +293,11 @@ export const MOCK_USERS: RatedUser[] = [
     bio: "Vim-adjacent opinions. Occasionally Ruby.",
     joined: "2008-04-09",
     categoryScores: {
-      craft: 88,
-      consistency: 82,
-      originality: 80,
       impact: 90,
+      consistency: 82,
+      quality: 88,
       depth: 72,
       breadth: 55,
-      volume: 78,
       community: 68,
     },
     languages: [
@@ -368,13 +379,11 @@ export const MOCK_USERS: RatedUser[] = [
     joined: "2015-02-19",
     location: "Tokyo",
     categoryScores: {
-      craft: 78,
-      consistency: 64,
-      originality: 88,
       impact: 62,
+      consistency: 64,
+      quality: 78,
       depth: 70,
       breadth: 72,
-      volume: 58,
       community: 48,
     },
     languages: [
@@ -456,13 +465,11 @@ export const MOCK_USERS: RatedUser[] = [
     bio: "Learning in public 🚀 Always shipping!",
     joined: "2022-09-12",
     categoryScores: {
-      craft: 44,
-      consistency: 58,
-      originality: 28,
       impact: 12,
+      consistency: 58,
+      quality: 44,
       depth: 22,
       breadth: 60,
-      volume: 40,
       community: 18,
     },
     languages: [
