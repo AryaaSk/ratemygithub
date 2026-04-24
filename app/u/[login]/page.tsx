@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { profileData } from "@/lib/data";
 import { tierForScore } from "@/lib/scoring/rubric";
 import { TierMedal } from "@/components/arcade/tier-medal";
 import { ScoreCounter } from "@/components/arcade/score-counter";
+import { Avatar } from "@/components/arcade/avatar";
 import { CategoryRadar } from "@/components/profile/radar";
 import { CategoryBars } from "@/components/profile/category-bars";
 import { CommitHeatmap } from "@/components/profile/commit-heatmap";
@@ -70,13 +70,12 @@ export default async function ProfilePage({
       >
         <div className="mx-auto max-w-5xl px-4 sm:px-8 py-6 sm:py-10 grid lg:grid-cols-[auto_1fr_auto] gap-5 sm:gap-8 items-center">
           <div className="flex items-center gap-4 sm:gap-5">
-            <Image
+            <Avatar
               src={u.avatar}
-              alt=""
-              width={80}
-              height={80}
-              unoptimized
-              className="w-16 h-16 sm:w-24 sm:h-24 pixel-border-lg bg-arcade-cream shrink-0"
+              size={96}
+              border="lg"
+              priority
+              className="w-16 h-16 sm:w-24 sm:h-24"
             />
             <div className="text-arcade-ink min-w-0 flex-1">
               <p className="font-pixel text-[9px] sm:text-[10px] uppercase opacity-80">

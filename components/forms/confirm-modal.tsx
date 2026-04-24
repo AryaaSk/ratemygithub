@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
-import Image from "next/image";
 import { PixelButton } from "@/components/arcade/pixel-button";
+import { Avatar } from "@/components/arcade/avatar";
 
 type Props = {
   open: boolean;
@@ -55,14 +55,7 @@ export function ConfirmModal({
         </h2>
 
         <div className="flex items-center gap-4 p-3 pixel-border-sm bg-arcade-cream-soft dark:bg-arcade-dark">
-          <Image
-            src={`https://github.com/${login}.png`}
-            alt=""
-            width={56}
-            height={56}
-            unoptimized
-            className="w-14 h-14 pixel-border-sm bg-arcade-cream"
-          />
+          <Avatar src={`https://github.com/${login}.png`} size={56} />
           <div className="text-xs space-y-1">
             <p>Their public profile will be scraped and scored.</p>
             <p className="opacity-70">Results go on the permanent leaderboard.</p>

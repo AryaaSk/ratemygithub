@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import type { Tier } from "@/lib/scoring/rubric";
 import { TIERS } from "@/lib/scoring/rubric";
 import { TierMedal } from "@/components/arcade/tier-medal";
+import { Avatar } from "@/components/arcade/avatar";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -50,14 +50,7 @@ export function LeaderboardRow({
       >
         {String(rank).padStart(2, "0")}
       </span>
-      <Image
-        src={avatar}
-        alt=""
-        width={36}
-        height={36}
-        unoptimized
-        className="w-9 h-9 pixel-border-sm bg-arcade-cream shrink-0"
-      />
+      <Avatar src={avatar} size={36} />
       <div className="min-w-0 flex-1">
         <div className="font-pixel text-[11px] sm:text-xs truncate">
           {login}

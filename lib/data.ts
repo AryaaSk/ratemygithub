@@ -48,16 +48,35 @@ function mockToRow(r: {
   };
 }
 
+/**
+ * Collapse duplicate logins (users rated more than once) to a single row.
+ * Keeps the first occurrence, so callers that pre-sort by score desc get
+ * the user's best score, and callers sorted by recency get their latest.
+ */
+function dedupeByLogin<T extends { login: string }>(rows: T[]): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const r of rows) {
+    const k = r.login.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(r);
+  }
+  return out;
+}
+
 export async function topRows(): Promise<LeaderboardRow[]> {
-  if (!HAS_DB) return mockLeaderboardRows().map(mockToRow);
-  const rows = await getTopRatings(100);
-  return rows.map((r) => ({
-    login: r.login,
-    avatarUrl: r.avatarUrl,
-    score: r.score,
-    tier: r.tier as Tier,
-    ratedAt: r.ratedAt.toISOString(),
-  }));
+  if (!HAS_DB) return dedupeByLogin(mockLeaderboardRows().map(mockToRow));
+  const rows = await getTopRatings(500);
+  return dedupeByLogin(
+    rows.map((r) => ({
+      login: r.login,
+      avatarUrl: r.avatarUrl,
+      score: r.score,
+      tier: r.tier as Tier,
+      ratedAt: r.ratedAt.toISOString(),
+    })),
+  );
 }
 
 export async function recentRowsData(): Promise<LeaderboardRow[]> {
@@ -73,16 +92,20 @@ export async function recentRowsData(): Promise<LeaderboardRow[]> {
 }
 
 export async function shameRowsData(): Promise<LeaderboardRow[]> {
-  if (!HAS_DB) return mockShameRows().map(mockToRow);
+  if (!HAS_DB) return dedupeByLogin(mockShameRows().map(mockToRow));
   const all = await getTopRatings(500);
-  const rows = all.slice(-6).reverse();
-  return rows.map((r) => ({
-    login: r.login,
-    avatarUrl: r.avatarUrl,
-    score: r.score,
-    tier: r.tier as Tier,
-    ratedAt: r.ratedAt.toISOString(),
-  }));
+  // Dedupe first (so one user can't hog the shame wall with multiple ratings),
+  // then take the 6 lowest-scoring unique logins.
+  const unique = dedupeByLogin(
+    all.map((r) => ({
+      login: r.login,
+      avatarUrl: r.avatarUrl,
+      score: r.score,
+      tier: r.tier as Tier,
+      ratedAt: r.ratedAt.toISOString(),
+    })),
+  );
+  return unique.slice(-6).reverse();
 }
 
 export type ProfileData = RatedUser & {

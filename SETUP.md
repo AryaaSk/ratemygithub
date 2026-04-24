@@ -175,7 +175,7 @@ Watch the row land in Supabase → Table Editor → `ratings`.
 - **Security gates**: `lib/github/validate.ts`, `lib/ratelimit.ts`, `lib/turnstile.ts`, `lib/queue.ts`
 - **Rubric (single source of truth)**: `lib/scoring/rubric.ts` + `lib/scoring/schema.ts`
 - **Design system**: `components/arcade/*` + `app/globals.css`
-- **AliasKit branding**: `components/aliaskit/banner.tsx` + footer in `app/page.tsx` + OG route + share text
+- **Zoral branding**: `components/zoral/banner.tsx` + footer in `app/page.tsx` + OG route + share text
 - **Mock fixture (dev fallback)**: `lib/mock.ts`
 
 ---
@@ -193,8 +193,8 @@ Watch the row land in Supabase → Table Editor → `ratings`.
 
 ## 11 · Viral-play checklist (pre-YC HQ field trip)
 
-- [ ] Prize decided (AliasKit hoodie / sticker / $50 gift card — pick one)
+- [ ] Prize decided (Zoral hoodie / sticker / $50 gift card — pick one)
 - [ ] OG share card renders correctly when pasted into X compose (`/api/og/<login>`)
-- [ ] AliasKit banner visible on every screen you plan to film
+- [ ] Zoral banner visible on every screen you plan to film
 - [ ] Mic-test the phone's audio (you need their reaction audible)
 - [ ] A running demo URL you can hand over in a 30-second ask

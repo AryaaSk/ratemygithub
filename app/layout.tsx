@@ -3,7 +3,7 @@ import { Geist, Geist_Mono, Press_Start_2P, VT323 } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Scanlines } from "@/components/arcade/scanlines";
-import { AliaskitBanner } from "@/components/aliaskit/banner";
+import { ZoralBanner } from "@/components/zoral/banner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,7 +45,7 @@ export default function RootLayout({
     >
       <body className="relative min-h-full flex flex-col overflow-x-hidden bg-arcade-cream text-arcade-ink dark:bg-arcade-dark dark:text-arcade-cream">
         <Scanlines />
-        <AliaskitBanner />
+        <ZoralBanner />
         {children}
         <Analytics />
       </body>

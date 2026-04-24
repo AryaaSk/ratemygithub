@@ -17,7 +17,7 @@ export function LeaderboardPanel({ initialTop, initialShame }: Props) {
   const [shame, setShame] = useState(initialShame);
 
   const rowsForTab = useMemo(() => {
-    if (tab === "top") return top.slice(0, 12);
+    if (tab === "top") return top;
     return shame.slice(0, 6);
   }, [tab, top, shame]);
 
@@ -68,9 +68,9 @@ export function LeaderboardPanel({ initialTop, initialShame }: Props) {
           ))
         )}
       </div>
-      {tab === "top" && top.length > 12 && (
+      {tab === "top" && top.length > 0 && (
         <p className="font-pixel text-[9px] uppercase tracking-widest opacity-50 text-center">
-          showing top 12 of {top.length}
+          showing all {top.length}
         </p>
       )}
     </section>

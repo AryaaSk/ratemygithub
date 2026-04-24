@@ -2,7 +2,7 @@
 
 Arcade-style public scoring of any GitHub profile. Enter a username, wait ~90 seconds, get a verdict across 6 rubric dimensions with per-repo evidence and a shareable OG card. Powered by a three-pass AI pipeline reading your actual code, not just your stats.
 
-Built using [AliasKit](https://aliaskit.com) — identity infra for AI agents.
+Built using [Zoral](https://zoral.ai) — replace every worker with AI.
 
 ---
 

@@ -162,8 +162,8 @@ export async function GET(
             textTransform: "uppercase",
           }}
         >
-          <span>Built using AliasKit — identity infra for AI agents</span>
-          <span>aliaskit.com</span>
+          <span>Built using Zoral — replace every worker with AI</span>
+          <span>zoral.ai</span>
         </div>
       </div>
     ),

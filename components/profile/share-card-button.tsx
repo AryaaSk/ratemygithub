@@ -20,7 +20,7 @@ export function ShareCardButton({ login, score, tier }: Props) {
       "",
       "think you can beat it? ↓",
       "",
-      "(built using @aliaskit)",
+      "(built using @zoral)",
     ].join("\n");
     const url =
       typeof window !== "undefined"
