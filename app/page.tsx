@@ -8,9 +8,12 @@ export default async function Home() {
   const [top, shame] = await Promise.all([topRows(), shameRowsData()]);
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col relative">
+      <div className="hidden lg:block absolute top-3 right-4 z-10">
+        <CreditBlock />
+      </div>
       <main className="flex-1 mx-auto w-full max-w-3xl px-4 sm:px-8 pt-4 sm:pt-6 pb-16 space-y-6 sm:space-y-8">
-        <div className="flex justify-end">
+        <div className="flex justify-end lg:hidden">
           <CreditBlock />
         </div>
         <HeroCard />
