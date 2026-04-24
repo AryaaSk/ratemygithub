@@ -26,7 +26,7 @@ export function ZoralBanner() {
           rel="noreferrer"
           className="hidden sm:inline text-arcade-green hover:underline underline-offset-2"
         >
-          Shadow one worker · deploy on day 7 →
+          Replace any worker with AI →
         </Link>
       </div>
     </div>

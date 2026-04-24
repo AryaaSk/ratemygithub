@@ -51,7 +51,7 @@ export function BuiltWithZoralCard() {
       <p className="relative mt-3 text-sm leading-relaxed text-white/80">
         Shadows <span className="text-white">one worker</span> for a week, then
         takes over their job with{" "}
-        <span className="text-[#a78bfa]">zero extra setup</span> — and behaves
+        <span className="text-[#a78bfa]">zero extra setup</span>. Behaves
         exactly like the original.
       </p>
 
