@@ -9,27 +9,27 @@ export default async function Home() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <main className="flex-1 mx-auto w-full max-w-3xl px-4 sm:px-8 pt-6 sm:pt-10 pb-16 space-y-8 sm:space-y-10">
+      <main className="flex-1 mx-auto w-full max-w-3xl px-4 sm:px-8 pt-4 sm:pt-6 pb-16 space-y-6 sm:space-y-8">
+        <div className="flex justify-end">
+          <CreditBlock />
+        </div>
         <HeroCard />
         <LeaderboardPanel initialTop={top} initialShame={shame} />
       </main>
 
-      <footer className="px-4 sm:px-8 py-5 border-t-2 border-arcade-ink/15 dark:border-arcade-cream/15 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="font-pixel text-[9px] uppercase tracking-widest opacity-60 flex flex-wrap items-center gap-x-4 gap-y-1">
-          <span>
-            Built using{" "}
-            <a
-              href="https://zoral.ai"
-              target="_blank"
-              rel="noreferrer"
-              className="text-arcade-red hover:underline underline-offset-2"
-            >
-              Zoral
-            </a>
-          </span>
-          <span>public data only</span>
-        </div>
-        <CreditBlock />
+      <footer className="px-4 sm:px-8 py-5 border-t-2 border-arcade-ink/15 dark:border-arcade-cream/15 font-pixel text-[9px] uppercase tracking-widest opacity-60 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <span>
+          Built using{" "}
+          <a
+            href="https://zoral.ai"
+            target="_blank"
+            rel="noreferrer"
+            className="text-arcade-red hover:underline underline-offset-2"
+          >
+            Zoral
+          </a>
+        </span>
+        <span>public data only</span>
       </footer>
     </div>
   );
