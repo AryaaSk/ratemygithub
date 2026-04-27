@@ -3,6 +3,7 @@ import { z } from "zod";
 import { validateGithubLogin } from "@/lib/github/validate";
 import {
   hasRecentRating,
+  getRecentJobCountByIp,
   upsertUser,
   createJob,
   markJobDone,
@@ -132,6 +133,34 @@ export async function POST(req: NextRequest) {
     }
   } catch (e) {
     console.warn(`[rmg] ratelimit errored; allowing through: ${(e as Error).message}`);
+  }
+
+  // DB-backed backstop. Upstash is the primary limiter, but it's optional
+  // (env-gated) and on 2026-04-27 a single GCP IP scripted 158 ratings
+  // through because Upstash wasn't configured. This guarantees a hard cap
+  // regardless of redis state.
+  const IP_HOURLY_HARD_CAP = 12;
+  if (ip !== "unknown") {
+    try {
+      const recentCount = await getRecentJobCountByIp(ip, 1);
+      if (recentCount >= IP_HOURLY_HARD_CAP) {
+        console.warn(
+          `[rmg] db-backstop blocked ip=${ip} recent=${recentCount}`,
+        );
+        return NextResponse.json(
+          {
+            error:
+              "Too many submissions from this IP. Try again in an hour.",
+            code: "ip_rate_limited",
+          },
+          { status: 429 },
+        );
+      }
+    } catch (e) {
+      console.warn(
+        `[rmg] db backstop errored; allowing through: ${(e as Error).message}`,
+      );
+    }
   }
 
   // Validate username (regex + live GitHub check + must be a real user).

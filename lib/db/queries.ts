@@ -77,6 +77,22 @@ export async function getPercentileForScore(score: number) {
   return (first.below / first.total) * 100;
 }
 
+/**
+ * Count of jobs from a given IP in the last `hours` hours.
+ * Used as a DB-backed rate-limit backstop — Upstash may be unconfigured or
+ * down, so this guarantees one IP can never blow past a hard cap.
+ */
+export async function getRecentJobCountByIp(ip: string, hours = 1) {
+  const since = new Date(Date.now() - hours * 60 * 60 * 1000);
+  const rows = await db()
+    .select({ n: sql<number>`count(*)::int` })
+    .from(schema.jobs)
+    .where(
+      and(eq(schema.jobs.clientIp, ip), gte(schema.jobs.createdAt, since)),
+    );
+  return rows[0]?.n ?? 0;
+}
+
 /** Whether a login has an in-flight or completed rating in the last 24h. */
 export async function hasRecentRating(login: string, hours = 24) {
   const since = new Date(Date.now() - hours * 60 * 60 * 1000);
