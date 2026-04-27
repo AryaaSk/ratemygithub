@@ -26,13 +26,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ rows: dedupeByLogin(rows) });
     }
     if (kind === "shame") {
-      // Hall of shame = bottom 6 unique logins by score.
-      const all = await getTopRatings(500);
-      const unique = dedupeByLogin(all);
-      return NextResponse.json({ rows: unique.slice(-6).reverse() });
+      // Hall of shame = bottom 6 unique logins by latest score.
+      const all = await getTopRatings(10_000);
+      return NextResponse.json({ rows: all.slice(-6).reverse() });
     }
-    const rows = await getTopRatings(500);
-    return NextResponse.json({ rows: dedupeByLogin(rows) });
+    const rows = await getTopRatings(10_000);
+    return NextResponse.json({ rows });
   } catch (err) {
     return NextResponse.json(
       { error: (err as Error).message, rows: [] },

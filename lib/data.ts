@@ -67,16 +67,16 @@ function dedupeByLogin<T extends { login: string }>(rows: T[]): T[] {
 
 export async function topRows(): Promise<LeaderboardRow[]> {
   if (!HAS_DB) return dedupeByLogin(mockLeaderboardRows().map(mockToRow));
-  const rows = await getTopRatings(500);
-  return dedupeByLogin(
-    rows.map((r) => ({
-      login: r.login,
-      avatarUrl: r.avatarUrl,
-      score: r.score,
-      tier: r.tier as Tier,
-      ratedAt: r.ratedAt.toISOString(),
-    })),
-  );
+  // Big limit because the leaderboard renders every rated user, and
+  // getTopRatings already collapses to one row per login at the SQL level.
+  const rows = await getTopRatings(10_000);
+  return rows.map((r) => ({
+    login: r.login,
+    avatarUrl: r.avatarUrl,
+    score: r.score,
+    tier: r.tier as Tier,
+    ratedAt: r.ratedAt.toISOString(),
+  }));
 }
 
 export async function recentRowsData(): Promise<LeaderboardRow[]> {
@@ -93,19 +93,16 @@ export async function recentRowsData(): Promise<LeaderboardRow[]> {
 
 export async function shameRowsData(): Promise<LeaderboardRow[]> {
   if (!HAS_DB) return dedupeByLogin(mockShameRows().map(mockToRow));
-  const all = await getTopRatings(500);
-  // Dedupe first (so one user can't hog the shame wall with multiple ratings),
-  // then take the 6 lowest-scoring unique logins.
-  const unique = dedupeByLogin(
-    all.map((r) => ({
-      login: r.login,
-      avatarUrl: r.avatarUrl,
-      score: r.score,
-      tier: r.tier as Tier,
-      ratedAt: r.ratedAt.toISOString(),
-    })),
-  );
-  return unique.slice(-6).reverse();
+  // Pull every unique user (capped huge), then take the 6 lowest by latest score.
+  const all = await getTopRatings(10_000);
+  const tail = all.slice(-6).reverse();
+  return tail.map((r) => ({
+    login: r.login,
+    avatarUrl: r.avatarUrl,
+    score: r.score,
+    tier: r.tier as Tier,
+    ratedAt: r.ratedAt.toISOString(),
+  }));
 }
 
 export type ProfileData = RatedUser & {
@@ -138,14 +135,24 @@ export async function profileData(loginParam: string): Promise<ProfileData | nul
     .limit(1);
   if (!userRow) return null;
 
+  // Rank against each user's *latest* rating, not every rating event —
+  // otherwise users with multiple re-ratings get counted multiple times.
+  // Tiebreaker on (score desc, created_at desc, login asc) must match the
+  // leaderboard query so the displayed rank lines up with the visible row.
   const rankRows = await db().execute<{ rank: number; total: number }>(
-    sql`select
+    sql`with latest as (
+          select distinct on (login) login, score, created_at
+          from ${schema.ratings}
+          order by login, created_at desc
+        )
+        select
           (
-            select count(*)
-            from ${schema.ratings} r2
-            where r2.score >= ${rating.score}
+            select count(*) from latest l
+            where l.score > ${rating.score}
+               or (l.score = ${rating.score} and l.created_at > ${rating.createdAt})
+               or (l.score = ${rating.score} and l.created_at = ${rating.createdAt} and l.login <= ${key})
           )::int as rank,
-          (select count(*) from ${schema.ratings})::int as total`,
+          (select count(*) from latest)::int as total`,
   );
   const { rank, total } = rankRows[0] ?? { rank: 1, total: 1 };
   const percentile = total ? ((total - rank + 1) / total) * 100 : 100;

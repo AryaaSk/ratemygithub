@@ -2,19 +2,38 @@ import "server-only";
 import { db, schema } from "./client";
 import { desc, eq, sql, and, gte } from "drizzle-orm";
 
-/** Top N ratings by score, joined with user display data. */
+/**
+ * Top N unique users by their latest rating score.
+ *
+ * `ratings` is append-only — re-rating a user inserts a new row. To stop the
+ * leaderboard from shrinking as duplicates fill the top slots, collapse to
+ * one row per login (keeping the most recent rating) before sorting.
+ */
 export async function getTopRatings(limit = 100) {
+  const latest = db()
+    .selectDistinctOn([schema.ratings.login], {
+      login: schema.ratings.login,
+      score: schema.ratings.score,
+      tier: schema.ratings.tier,
+      createdAt: schema.ratings.createdAt,
+    })
+    .from(schema.ratings)
+    .orderBy(schema.ratings.login, desc(schema.ratings.createdAt))
+    .as("latest");
+
   return db()
     .select({
       login: schema.users.displayLogin,
       avatarUrl: schema.users.avatarUrl,
-      score: schema.ratings.score,
-      tier: schema.ratings.tier,
-      ratedAt: schema.ratings.createdAt,
+      score: latest.score,
+      tier: latest.tier,
+      ratedAt: latest.createdAt,
     })
-    .from(schema.ratings)
-    .innerJoin(schema.users, eq(schema.ratings.login, schema.users.login))
-    .orderBy(desc(schema.ratings.score))
+    .from(latest)
+    .innerJoin(schema.users, eq(latest.login, schema.users.login))
+    // Deterministic tiebreakers — without these, tied scores swap positions
+    // across cache renewals and users appear to "go missing."
+    .orderBy(desc(latest.score), desc(latest.createdAt), latest.login)
     .limit(limit);
 }
 
