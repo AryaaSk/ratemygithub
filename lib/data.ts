@@ -3,6 +3,12 @@ import {
   getTopRatings,
   getRecentRatings,
   getLatestRating,
+  getRecentRoastSamples,
+  getDailyStats,
+  getTopClimbers,
+  type RoastSample,
+  type DailyStats,
+  type Climber,
 } from "@/lib/db/queries";
 import { db, schema } from "@/lib/db/client";
 import { eq, sql } from "drizzle-orm";
@@ -103,6 +109,68 @@ export async function shameRowsData(): Promise<LeaderboardRow[]> {
     tier: r.tier as Tier,
     ratedAt: r.ratedAt.toISOString(),
   }));
+}
+
+// -----------------------------------------------------------------------------
+// "Daily vibes" homepage panel — recent roasts, stats, climbers.
+// -----------------------------------------------------------------------------
+
+export type DailyVibes = {
+  stats: DailyStats;
+  roasts: RoastSample[];
+  climbers: Climber[];
+};
+
+const VIBES_HOURS = 48;
+const ROASTS_SHOWN = 3;
+const CLIMBERS_SHOWN = 3;
+
+export async function dailyVibesData(): Promise<DailyVibes> {
+  if (!HAS_DB) return mockVibes();
+  const [stats, roastPool, climbers] = await Promise.all([
+    getDailyStats(VIBES_HOURS),
+    // Pool more than we render so each ISR rebuild rotates the line shown.
+    getRecentRoastSamples(VIBES_HOURS, 24),
+    getTopClimbers(VIBES_HOURS, CLIMBERS_SHOWN),
+  ]);
+  return {
+    stats,
+    roasts: roastPool.slice(0, ROASTS_SHOWN),
+    climbers,
+  };
+}
+
+function mockVibes(): DailyVibes {
+  // Sample from existing mock users so the panel has something to show in
+  // local dev without DB.
+  const users = Object.values(MOCK_BY_LOGIN);
+  const pool = users.flatMap((u) =>
+    u.roasts.map((r) => ({
+      login: u.login,
+      displayLogin: u.login,
+      avatarUrl: u.avatar,
+      score: u.score,
+      tier: u.tier,
+      label: r.label,
+      body: r.body,
+      flavor: r.flavor,
+    })),
+  );
+  // Stable but pseudo-random pick on every dev refresh.
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  return {
+    stats: {
+      hours: VIBES_HOURS,
+      nRatings: users.length,
+      nUsers: users.length,
+      medianScore: 50,
+      avgScore: 52,
+      sCount: users.filter((u) => u.tier === "S").length,
+      fCount: users.filter((u) => u.tier === "F").length,
+    },
+    roasts: shuffled.slice(0, ROASTS_SHOWN),
+    climbers: [],
+  };
 }
 
 export type ProfileData = RatedUser & {

@@ -53,6 +53,176 @@ export async function getRecentRatings(limit = 20) {
     .limit(limit);
 }
 
+// -----------------------------------------------------------------------------
+// "Daily vibes" homepage panel queries.
+// -----------------------------------------------------------------------------
+
+export type RoastSample = {
+  login: string;
+  displayLogin: string;
+  avatarUrl: string | null;
+  score: number;
+  tier: string;
+  label: string;
+  body: string;
+  flavor: string;
+};
+
+/**
+ * Random sample of roasts from latest ratings within the last `hours` hours.
+ * Pulls roasts from each user's *latest* rating only, so an old roast on a
+ * stale score doesn't leak through.
+ */
+export async function getRecentRoastSamples(hours: number, limit: number) {
+  const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+  const rows = await db().execute<{
+    login: string;
+    display_login: string;
+    avatar_url: string | null;
+    score: number;
+    tier: string;
+    label: string;
+    body: string;
+    flavor: string;
+  }>(
+    sql`with latest as (
+          select distinct on (login) login, score, tier, roasts, created_at
+          from ${schema.ratings}
+          where created_at >= ${since}::timestamptz
+          order by login, created_at desc
+        )
+        select
+          l.login as login,
+          u.display_login as display_login,
+          u.avatar_url as avatar_url,
+          l.score as score,
+          l.tier as tier,
+          (r->>'label') as label,
+          (r->>'body') as body,
+          (r->>'flavor') as flavor
+        from latest l
+        inner join ${schema.users} u on l.login = u.login,
+        jsonb_array_elements(l.roasts) as r
+        order by random()
+        limit ${limit}`,
+  );
+  return rows.map((r) => ({
+    login: r.login,
+    displayLogin: r.display_login,
+    avatarUrl: r.avatar_url,
+    score: r.score,
+    tier: r.tier,
+    label: r.label,
+    body: r.body,
+    flavor: r.flavor,
+  })) satisfies RoastSample[];
+}
+
+export type DailyStats = {
+  hours: number;
+  nRatings: number;
+  nUsers: number;
+  medianScore: number;
+  avgScore: number;
+  sCount: number;
+  fCount: number;
+};
+
+export async function getDailyStats(hours: number): Promise<DailyStats> {
+  const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+  const rows = await db().execute<{
+    n_ratings: number;
+    n_users: number;
+    median_score: number | null;
+    avg_score: number | null;
+    s_count: number;
+    f_count: number;
+  }>(
+    sql`with latest as (
+          select distinct on (login) login, score, tier
+          from ${schema.ratings}
+          where created_at >= ${since}::timestamptz
+          order by login, created_at desc
+        )
+        select
+          (select count(*) from ${schema.ratings} where created_at >= ${since}::timestamptz)::int as n_ratings,
+          count(*)::int as n_users,
+          round(percentile_cont(0.5) within group (order by score)::numeric, 1)::float as median_score,
+          round(avg(score)::numeric, 1)::float as avg_score,
+          coalesce(sum((tier = 'S')::int), 0)::int as s_count,
+          coalesce(sum((tier = 'F')::int), 0)::int as f_count
+        from latest`,
+  );
+  const r = rows[0];
+  return {
+    hours,
+    nRatings: r?.n_ratings ?? 0,
+    nUsers: r?.n_users ?? 0,
+    medianScore: r?.median_score ?? 0,
+    avgScore: r?.avg_score ?? 0,
+    sCount: r?.s_count ?? 0,
+    fCount: r?.f_count ?? 0,
+  };
+}
+
+export type Climber = {
+  login: string;
+  displayLogin: string;
+  avatarUrl: string | null;
+  oldScore: number;
+  newScore: number;
+  delta: number;
+};
+
+/**
+ * Users who re-rated within the last `hours` hours and whose new score is at
+ * least `minDelta` points above the previous rating. Sorted by delta desc.
+ */
+export async function getTopClimbers(
+  hours: number,
+  limit: number,
+  minDelta = 5,
+) {
+  const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+  const rows = await db().execute<{
+    login: string;
+    display_login: string;
+    avatar_url: string | null;
+    old_score: number;
+    new_score: number;
+    delta: number;
+  }>(
+    sql`with ranked as (
+          select login, score, created_at,
+            row_number() over (partition by login order by created_at desc) as rn
+          from ${schema.ratings}
+        )
+        select
+          curr.login as login,
+          u.display_login as display_login,
+          u.avatar_url as avatar_url,
+          prev.score as old_score,
+          curr.score as new_score,
+          round((curr.score - prev.score)::numeric, 1)::float as delta
+        from ranked curr
+        inner join ranked prev on prev.login = curr.login and prev.rn = 2
+        inner join ${schema.users} u on curr.login = u.login
+        where curr.rn = 1
+          and curr.created_at >= ${since}::timestamptz
+          and (curr.score - prev.score) >= ${minDelta}
+        order by (curr.score - prev.score) desc
+        limit ${limit}`,
+  );
+  return rows.map((r) => ({
+    login: r.login,
+    displayLogin: r.display_login,
+    avatarUrl: r.avatar_url,
+    oldScore: r.old_score,
+    newScore: r.new_score,
+    delta: r.delta,
+  })) satisfies Climber[];
+}
+
 /** Latest rating for a specific user. */
 export async function getLatestRating(login: string) {
   const rows = await db()

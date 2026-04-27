@@ -1,11 +1,16 @@
 import { HeroCard } from "@/components/landing/hero-card";
 import { LeaderboardPanel } from "@/components/landing/leaderboard-panel";
-import { shameRowsData, topRows } from "@/lib/data";
+import { DailyVibesPanel } from "@/components/landing/daily-vibes-panel";
+import { dailyVibesData, shameRowsData, topRows } from "@/lib/data";
 
 export const revalidate = 15;
 
 export default async function Home() {
-  const [top, shame] = await Promise.all([topRows(), shameRowsData()]);
+  const [top, shame, vibes] = await Promise.all([
+    topRows(),
+    shameRowsData(),
+    dailyVibesData(),
+  ]);
 
   return (
     <div className="flex-1 flex flex-col relative">
@@ -18,6 +23,7 @@ export default async function Home() {
         </div>
         <HeroCard />
         <LeaderboardPanel initialTop={top} initialShame={shame} />
+        <DailyVibesPanel data={vibes} />
       </main>
 
       <footer className="px-4 sm:px-8 py-5 border-t-2 border-arcade-ink/15 dark:border-arcade-cream/15 font-pixel text-[9px] uppercase tracking-widest opacity-60 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
