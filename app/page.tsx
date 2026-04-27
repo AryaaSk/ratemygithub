@@ -17,23 +17,49 @@ export default async function Home() {
       <div className="hidden lg:block absolute top-3 right-4 z-10">
         <CreditBlock />
       </div>
-      <main className="flex-1 mx-auto w-full max-w-3xl lg:max-w-6xl px-4 sm:px-8 pt-4 sm:pt-6 pb-16">
+      <main className="flex-1 mx-auto w-full max-w-3xl lg:max-w-6xl xl:max-w-screen-2xl px-4 sm:px-8 pt-4 sm:pt-6 pb-16">
         <div className="flex justify-end lg:hidden mb-6">
           <CreditBlock />
         </div>
-        <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-8 lg:items-start">
+        {/* Layout matrix:
+              < lg → single column, full vibes panel below leaderboard
+              lg   → 2 cols (form+leaderboard | full vibes sidebar)
+              xl+  → 3 cols (stats+climbers | center | roasts), symmetric flanking sidebars */}
+        <div
+          className="
+            lg:grid lg:gap-8 lg:items-start lg:grid-cols-[1fr_340px]
+            xl:grid-cols-[280px_minmax(0,1fr)_320px] xl:gap-6
+          "
+        >
+          {/* Left sidebar — only on xl+. Hidden on lg so the 2-col grid
+              still resolves cleanly with just two visible children. */}
+          <aside className="hidden xl:block xl:sticky xl:top-20 xl:self-start">
+            <DailyVibesPanel
+              data={vibes}
+              sections={["stats", "climbers"]}
+              compact
+            />
+          </aside>
+
+          {/* Center / main column */}
           <div className="space-y-6 sm:space-y-8">
             <HeroCard />
             <LeaderboardPanel initialTop={top} initialShame={shame} />
-            {/* Mobile: vibes panel sits below the leaderboard */}
+            {/* Mobile: full vibes panel sits below the leaderboard */}
             <div className="lg:hidden">
               <DailyVibesPanel data={vibes} />
             </div>
           </div>
-          {/* Desktop: vibes panel becomes a sticky sidebar so it's always
-              visible alongside the leaderboard */}
+
+          {/* Right sidebar — visible on lg+. On lg shows the full panel;
+              on xl+ shrinks to roasts only (stats + climbers move left). */}
           <aside className="hidden lg:block lg:sticky lg:top-20 lg:self-start">
-            <DailyVibesPanel data={vibes} />
+            <div className="xl:hidden">
+              <DailyVibesPanel data={vibes} />
+            </div>
+            <div className="hidden xl:block">
+              <DailyVibesPanel data={vibes} sections={["roasts"]} compact />
+            </div>
           </aside>
         </div>
       </main>
