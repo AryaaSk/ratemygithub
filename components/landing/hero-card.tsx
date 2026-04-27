@@ -131,7 +131,7 @@ export function HeroCard() {
     <div className="pixel-border bg-arcade-cream-soft dark:bg-arcade-dark-soft p-5 sm:p-8">
       <div className="mb-6 pb-5 border-b-2 border-arcade-ink/15 dark:border-arcade-cream/15 flex items-baseline justify-between gap-3">
         <h1 className="font-pixel text-base sm:text-lg md:text-xl tracking-tight leading-none">
-          RATE MY GITHUB
+          RateMyGithub.com
         </h1>
         <Link
           href="/style"
