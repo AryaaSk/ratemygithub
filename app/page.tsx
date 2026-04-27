@@ -23,17 +23,22 @@ export default async function Home() {
         </div>
         {/* Layout matrix:
               < lg → single column, full vibes panel below leaderboard
-              lg   → 2 cols (form+leaderboard | full vibes sidebar)
-              xl+  → 3 cols (stats+climbers | center | roasts), symmetric flanking sidebars */}
+              lg   → 2 cols, full vibes panel sticky on the right
+              xl+  → 3 cols, stats+climbers left | center | roasts right
+              The grid uses auto/1fr rows so the asides can be placed in
+              row 2 — that way they start aligned with the leaderboard,
+              not the HeroCard, and they sit clear of the absolute-
+              positioned "i work for Aryaa SK" credit block. */}
         <div
           className="
-            lg:grid lg:gap-8 lg:items-start lg:grid-cols-[1fr_340px]
+            lg:grid lg:gap-8 lg:items-start
+            lg:grid-cols-[minmax(0,1fr)_340px] lg:grid-rows-[auto_1fr]
             xl:grid-cols-[280px_minmax(0,1fr)_320px] xl:gap-6
           "
         >
-          {/* Left sidebar — only on xl+. Hidden on lg so the 2-col grid
-              still resolves cleanly with just two visible children. */}
-          <aside className="hidden xl:block xl:sticky xl:top-20 xl:self-start">
+          {/* Left sidebar — only on xl+. Placed at col 1, row 2 (alongside
+              the leaderboard, not the HeroCard). */}
+          <aside className="hidden xl:block xl:col-start-1 xl:row-start-2 xl:sticky xl:top-20 xl:self-start">
             <DailyVibesPanel
               data={vibes}
               sections={["stats", "climbers"]}
@@ -41,8 +46,9 @@ export default async function Home() {
             />
           </aside>
 
-          {/* Center / main column */}
-          <div className="space-y-6 sm:space-y-8">
+          {/* Center / main column — spans both grid rows so HeroCard and
+              Leaderboard stack normally inside it. */}
+          <div className="space-y-6 sm:space-y-8 lg:col-start-1 lg:row-span-2 xl:col-start-2">
             <HeroCard />
             <LeaderboardPanel initialTop={top} initialShame={shame} />
             {/* Mobile: full vibes panel sits below the leaderboard */}
@@ -51,9 +57,8 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* Right sidebar — visible on lg+. On lg shows the full panel;
-              on xl+ shrinks to roasts only (stats + climbers move left). */}
-          <aside className="hidden lg:block lg:sticky lg:top-20 lg:self-start">
+          {/* Right sidebar — lg+ at col 2 row 2 (lg) / col 3 row 2 (xl). */}
+          <aside className="hidden lg:block lg:col-start-2 lg:row-start-2 xl:col-start-3 lg:sticky lg:top-20 lg:self-start">
             <div className="xl:hidden">
               <DailyVibesPanel data={vibes} />
             </div>
