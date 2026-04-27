@@ -17,13 +17,25 @@ export default async function Home() {
       <div className="hidden lg:block absolute top-3 right-4 z-10">
         <CreditBlock />
       </div>
-      <main className="flex-1 mx-auto w-full max-w-3xl px-4 sm:px-8 pt-4 sm:pt-6 pb-16 space-y-6 sm:space-y-8">
-        <div className="flex justify-end lg:hidden">
+      <main className="flex-1 mx-auto w-full max-w-3xl lg:max-w-6xl px-4 sm:px-8 pt-4 sm:pt-6 pb-16">
+        <div className="flex justify-end lg:hidden mb-6">
           <CreditBlock />
         </div>
-        <HeroCard />
-        <LeaderboardPanel initialTop={top} initialShame={shame} />
-        <DailyVibesPanel data={vibes} />
+        <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-8 lg:items-start">
+          <div className="space-y-6 sm:space-y-8">
+            <HeroCard />
+            <LeaderboardPanel initialTop={top} initialShame={shame} />
+            {/* Mobile: vibes panel sits below the leaderboard */}
+            <div className="lg:hidden">
+              <DailyVibesPanel data={vibes} />
+            </div>
+          </div>
+          {/* Desktop: vibes panel becomes a sticky sidebar so it's always
+              visible alongside the leaderboard */}
+          <aside className="hidden lg:block lg:sticky lg:top-20 lg:self-start">
+            <DailyVibesPanel data={vibes} />
+          </aside>
+        </div>
       </main>
 
       <footer className="px-4 sm:px-8 py-5 border-t-2 border-arcade-ink/15 dark:border-arcade-cream/15 font-pixel text-[9px] uppercase tracking-widest opacity-60 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
