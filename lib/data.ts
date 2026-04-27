@@ -139,6 +139,10 @@ export async function profileData(loginParam: string): Promise<ProfileData | nul
   // otherwise users with multiple re-ratings get counted multiple times.
   // Tiebreaker on (score desc, created_at desc, login asc) must match the
   // leaderboard query so the displayed rank lines up with the visible row.
+  // Date → ISO string + explicit cast: drizzle's raw `sql` template doesn't
+  // serialize JS Date instances for the postgres-js text protocol, which
+  // throws "must be string/Buffer/ArrayBuffer".
+  const createdAtIso = rating.createdAt.toISOString();
   const rankRows = await db().execute<{ rank: number; total: number }>(
     sql`with latest as (
           select distinct on (login) login, score, created_at
@@ -149,8 +153,8 @@ export async function profileData(loginParam: string): Promise<ProfileData | nul
           (
             select count(*) from latest l
             where l.score > ${rating.score}
-               or (l.score = ${rating.score} and l.created_at > ${rating.createdAt})
-               or (l.score = ${rating.score} and l.created_at = ${rating.createdAt} and l.login <= ${key})
+               or (l.score = ${rating.score} and l.created_at > ${createdAtIso}::timestamptz)
+               or (l.score = ${rating.score} and l.created_at = ${createdAtIso}::timestamptz and l.login <= ${key})
           )::int as rank,
           (select count(*) from latest)::int as total`,
   );
