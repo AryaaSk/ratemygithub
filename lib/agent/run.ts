@@ -31,6 +31,13 @@ import {
 } from "@/lib/scoring/schema";
 import { normalizeRatingOutput } from "@/lib/scoring/normalize";
 import { tierForScore, weightedOverall } from "@/lib/scoring/rubric";
+import { OpenAIRankingProvider } from "./openai-provider";
+import {
+  requiredApiKeyName,
+  resolveAgentMode,
+  resolveRankingProvider,
+  shouldUseMock,
+} from "./provider-selection";
 
 // ---------------------------------------------------------------------------
 // Model routing (v3)
@@ -141,6 +148,10 @@ function makeUsageAccumulator(): UsageAccumulator {
 export type RunResult = {
   rating: RatingOutput;
   heatmapWindowDays: number;
+  diagnostics?: {
+    provider: "anthropic" | "openai" | "mock";
+    estimatedCostUsd: number;
+  };
 };
 
 type RepoBundle = {
@@ -397,26 +408,47 @@ const SUBMIT_RATING_TOOL: Anthropic.Tool = {
 // runAgent — three-pass orchestration
 // ===========================================================================
 export async function runAgent(login: string): Promise<RunResult> {
-  const mode = process.env.AGENT_MODE ?? "auto";
-  const hasKey = Boolean(process.env.ANTHROPIC_API_KEY);
+  const mode = resolveAgentMode(process.env.AGENT_MODE);
+  const provider = resolveRankingProvider(process.env.RANKING_PROVIDER);
   const log = makeLogger(login);
 
-  if (mode === "mock" || (mode === "auto" && !hasKey)) {
-    log("mock-mode", "ANTHROPIC_API_KEY missing; returning deterministic stub");
-    return { rating: mockRating(login), heatmapWindowDays: 365 };
+  if (shouldUseMock(mode, provider)) {
+    log(
+      "mock-mode",
+      `${requiredApiKeyName(provider)} missing; returning deterministic stub`,
+    );
+    return {
+      rating: mockRating(login),
+      heatmapWindowDays: 365,
+      diagnostics: { provider: "mock", estimatedCostUsd: 0 },
+    };
   }
 
-  const client = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY!,
-    // If Anthropic hangs on a call we'd rather fail that call and move on
-    // than watch Vercel kill the whole function at the 300s wall. 90s is
-    // long enough for Sonnet to complete a hard Pass 3.
-    timeout: 90_000,
-    maxRetries: 1,
-  });
+  const requiredKey = requiredApiKeyName(provider);
+  if (!process.env[requiredKey]) {
+    throw new Error(
+      `${requiredKey} is required when RANKING_PROVIDER=${provider} and AGENT_MODE=${mode}.`,
+    );
+  }
+
+  const client =
+    provider === "anthropic"
+      ? new Anthropic({
+          apiKey: process.env.ANTHROPIC_API_KEY!,
+          // If Anthropic hangs on a call we'd rather fail that call and move on
+          // than watch Vercel kill the whole function at the 300s wall. 90s is
+          // long enough for Sonnet to complete a hard Pass 3.
+          timeout: 90_000,
+          maxRetries: 1,
+        })
+      : null;
+  const openai =
+    provider === "openai"
+      ? new OpenAIRankingProvider({ apiKey: process.env.OPENAI_API_KEY! })
+      : null;
   const usage = makeUsageAccumulator();
 
-  log("start");
+  log("start", `provider=${provider}`);
 
   // ------- Cheap GitHub fan-out ------------------------------------------
   log("fetching user + repos + events + contributions in parallel");
@@ -509,10 +541,14 @@ export async function runAgent(login: string): Promise<RunResult> {
   );
   log(
     "pass1-send",
-    `${(pass1Input.length / 1024).toFixed(1)} KB prompt → ${MODEL_PASS_1}`,
+    `${(pass1Input.length / 1024).toFixed(1)} KB prompt → ${
+      openai?.modelNames.pass1 ?? MODEL_PASS_1
+    }`,
   );
   const pass1Start = Date.now();
-  const selection = await pass1(client, pass1Input, usage);
+  const selection = openai
+    ? await openai.selectFiles(pass1Input)
+    : await pass1(client!, pass1Input, usage);
   log(
     "pass1-done",
     `picked ${selection.selections.reduce((a, s) => a + s.files.length, 0)} files in ${((Date.now() - pass1Start) / 1000).toFixed(1)}s`,
@@ -550,15 +586,20 @@ export async function runAgent(login: string): Promise<RunResult> {
     `${totalFiles} file(s) in ${((Date.now() - fileStart) / 1000).toFixed(1)}s`,
   );
 
-  // ------- Pass 2 — per-repo scoring (Haiku, parallel) -------------------
-  log("pass2-start", `${repoBundles.length} parallel Haiku calls`);
+  // ------- Pass 2 — per-repo scoring (provider-controlled concurrency) ---
+  log(
+    "pass2-start",
+    `${repoBundles.length} ${openai ? `OpenAI calls (concurrency ${openai.repoConcurrency})` : "parallel Haiku calls"}`,
+  );
   const pass2Start = Date.now();
   const perRepoResults: Array<{
     bundle: RepoBundle;
     result: PerRepoScore | null;
     error: string | null;
-  }> = await Promise.all(
-    repoBundles.map(async (b) => {
+  }> = await mapWithConcurrency(
+    repoBundles,
+    openai?.repoConcurrency ?? repoBundles.length,
+    async (b) => {
       try {
         const files = filesByRepo.get(b.repo.name) ?? [];
         const input = formatPass2RepoInput({
@@ -568,7 +609,9 @@ export async function runAgent(login: string): Promise<RunResult> {
           files: trimRepoFilesToBudget(b.readme ?? "", files),
           commitCountSample: commitsByRepo.get(b.repo.name) ?? 0,
         });
-        const result = await pass2Repo(client, input, usage);
+        const result = openai
+          ? await openai.scoreRepo(input)
+          : await pass2Repo(client!, input, usage);
         return { bundle: b, result: { ...result, name: b.repo.name }, error: null };
       } catch (err) {
         return {
@@ -577,7 +620,7 @@ export async function runAgent(login: string): Promise<RunResult> {
           error: (err as Error).message,
         };
       }
-    }),
+    },
   );
   const pass2Duration = ((Date.now() - pass2Start) / 1000).toFixed(1);
   const pass2Ok = perRepoResults.filter((r) => r.result).length;
@@ -614,20 +657,19 @@ export async function runAgent(login: string): Promise<RunResult> {
   });
   log(
     "pass3-send",
-    `${(pass3Input.length / 1024).toFixed(1)} KB prompt → ${MODEL_PASS_3}`,
+    `${(pass3Input.length / 1024).toFixed(1)} KB prompt → ${
+      openai?.modelNames.pass3 ?? MODEL_PASS_3
+    }`,
   );
   const pass3Start = Date.now();
-  const rating = await pass3(
-    client,
-    pass3Input,
-    log,
-    {
-      heatmap: stats.heatmap,
-      langPcts: stats.langPcts,
-      login,
-    },
-    usage,
-  );
+  const normalizeFallback = {
+    heatmap: stats.heatmap,
+    langPcts: stats.langPcts,
+    login,
+  };
+  const rating = openai
+    ? await openai.aggregateProfile(pass3Input, normalizeFallback)
+    : await pass3(client!, pass3Input, log, normalizeFallback, usage);
   log(
     "pass3-done",
     `overall=${rating.overallScore} tier=${rating.tier} in ${((Date.now() - pass3Start) / 1000).toFixed(1)}s`,
@@ -936,11 +978,17 @@ export async function runAgent(login: string): Promise<RunResult> {
   );
 
   // -- Cost accounting ----------------------------------------------------
-  const { totalInput, totalOutput, totalCost, perModel } = usage.summary();
+  const { totalInput, totalOutput, totalCost, perModel } = openai
+    ? openai.usageSummary()
+    : usage.summary();
   for (const m of perModel) {
     log(
       "tokens-per-model",
-      `${m.model} · ${m.bucket.calls} calls · ${m.bucket.input.toLocaleString()} in / ${m.bucket.output.toLocaleString()} out · $${m.cost.toFixed(4)}`,
+      `${m.model} · ${m.bucket.calls} calls · ${m.bucket.input.toLocaleString()} in / ${m.bucket.output.toLocaleString()} out${
+        "cachedInput" in m.bucket
+          ? ` · ${m.bucket.cachedInput.toLocaleString()} cached`
+          : ""
+      } · $${m.cost.toFixed(4)}`,
     );
   }
   log(
@@ -949,7 +997,11 @@ export async function runAgent(login: string): Promise<RunResult> {
   );
 
   log("done");
-  return { rating, heatmapWindowDays: stats.heatmapWindowDays };
+  return {
+    rating,
+    heatmapWindowDays: stats.heatmapWindowDays,
+    diagnostics: { provider, estimatedCostUsd: totalCost },
+  };
 }
 
 // ===========================================================================
@@ -1081,6 +1133,28 @@ async function pass3(
 // ===========================================================================
 // Helpers
 // ===========================================================================
+async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  requestedLimit: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  if (items.length === 0) return [];
+  const limit = Math.max(1, Math.min(items.length, Math.floor(requestedLimit)));
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  await Promise.all(
+    Array.from({ length: limit }, async () => {
+      while (true) {
+        const index = nextIndex++;
+        if (index >= items.length) return;
+        results[index] = await fn(items[index], index);
+      }
+    }),
+  );
+  return results;
+}
+
 function safeExtractJson(text: string): Record<string, unknown> | null {
   const cleaned = text.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
   try {

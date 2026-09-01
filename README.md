@@ -10,7 +10,7 @@ Built using [Zoral](https://zoral.ai) — replace every worker with AI.
 
 1. You enter a GitHub username.
 2. We scrape every public repo pushed in the last 90 days + the last 365 days of contribution data + language byte counts, all via GitHub's REST + GraphQL APIs.
-3. An AI pipeline reads the actual source code of the top ~12 repos and grades each on Impact, Quality, and Depth with cited evidence.
+3. An AI pipeline (Anthropic or OpenAI, selected server-side) reads the actual source code of the top ~12 repos and grades each on Impact, Quality, and Depth with cited evidence.
 4. A second aggregation model blends those per-repo scores with server-computed stats into a 6-dimension profile score (Impact · Consistency · Quality · Depth · Breadth · Community).
 5. You get a tier (S → F), a percentile, an OG share card, and 3–5 personalised roasts. All in ~90 seconds for ~$0.25 in compute.
 
@@ -84,7 +84,7 @@ Each category has a concrete anchor scale defined in [`lib/agent/system-prompt.t
 | Charts | recharts | Radar, donut, bars |
 | Fonts | `Press Start 2P`, `VT323`, `Geist` | Arcade heads, SNES score digits, readable body |
 | DB | Supabase Postgres + Drizzle ORM | Managed Postgres with Realtime for live leaderboard |
-| AI | Anthropic Sonnet 4.6 + Haiku 4.5 | Sonnet for reasoning, Haiku for parallel scoring |
+| AI | Anthropic Sonnet/Haiku or OpenAI Agents SDK with GPT-5.6 Terra/Luna | Server-selected provider; one shared rubric and correction path |
 | GitHub | REST + GraphQL, PAT auth | GraphQL for `contributionsCollection` + language bytes |
 | Deploy | Vercel (functions up to 60 s) | Matches the ~90-s-p95 wall clock with generous margin |
 
@@ -143,7 +143,7 @@ drizzle/
    Copy `DATABASE_URL` (pooled, port 6543), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` into `.env.local`.
    Run `drizzle/0000_init.sql` in the SQL Editor.
 
-3. **Anthropic** — [console.anthropic.com](https://console.anthropic.com) API key → `ANTHROPIC_API_KEY`. Set a monthly spend cap.
+3. **AI provider** — set `RANKING_PROVIDER=anthropic` with `ANTHROPIC_API_KEY`, or `RANKING_PROVIDER=openai` with `OPENAI_API_KEY`. Anthropic remains the default when the selector is omitted.
 
 4. **GitHub** — Fine-grained PAT with `public_repo:read` → `GITHUB_TOKEN`. Required, not optional: each rating burns ~25 API calls.
 
@@ -189,6 +189,8 @@ Per rating, typical profile (6 recent repos):
 | **Total** | **~70 k in / 7 k out** | **~$0.20** |
 
 Large profiles (12 recent repos) scale to ~$0.30. Server logs print the per-model breakdown after every rating.
+
+The additive OpenAI path uses GPT-5.6 Terra for file selection and profile aggregation and GPT-5.6 Luna for per-repo scoring. It uses the same prompts, normalization, and deterministic corrections as the Anthropic path, and logs its own token/cost breakdown.
 
 Wall clock p50 ~ 75 s, p95 ~ 105 s. Vercel function max duration: 60 s on Hobby, 300 s on Pro. Pro recommended.
 

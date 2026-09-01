@@ -44,6 +44,23 @@ function clientIp(req: NextRequest) {
  */
 function friendlyError(raw: string): { code: string; userMessage: string } {
   const m = raw.toLowerCase();
+  const openAISelected =
+    (process.env.RANKING_PROVIDER ?? "anthropic").toLowerCase() === "openai";
+  if (
+    !m.includes("github") &&
+    (m.includes("openai") ||
+      (openAISelected &&
+        (m.includes("rate limit") ||
+          m.includes("429") ||
+          m.includes("modeltimeout") ||
+          m.includes("max turns") ||
+          m.includes("overloaded"))))
+  ) {
+    return {
+      code: "openai_transient",
+      userMessage: "The OpenAI grader was busy. Retry in a few seconds.",
+    };
+  }
   if (m.includes("rate limit") || m.includes("403") || m.includes("429")) {
     return {
       code: "github_rate_limited",

@@ -6,11 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "NODE_OPTIONS=--conditions=react-server tsx --test tests/**/*.test.ts",
+    "smoke:openai": "NODE_OPTIONS=--conditions=react-server tsx scripts/smoke-openai.ts"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.113",
     "@anthropic-ai/sdk": "^0.90.0",
+    "@openai/agents": "0.17.0",
     "@supabase/supabase-js": "^2.103.3",
     "@upstash/qstash": "^2.10.1",
     "@upstash/ratelimit": "^2.0.8",
@@ -28,10 +31,12 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "recharts": "^3.8.1",
+    "server-only": "0.0.1",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@next/env": "16.2.4",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -39,6 +44,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "tailwindcss": "^4",
+    "tsx": "4.23.13",
     "typescript": "^5"
   }
 }

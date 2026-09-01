@@ -68,13 +68,23 @@ Paste as `DEV_QSTASH_BYPASS_SECRET`.
 
 ---
 
-## 3 · Anthropic  — 2 min
+## 3 · Ranking provider  — 2 min
 
-Both scoring passes run against the Anthropic API.
+Choose one backend provider. No frontend changes are required.
 
-1. [console.anthropic.com](https://console.anthropic.com) → *API Keys → Create Key*.
-2. Paste as `ANTHROPIC_API_KEY`.
-3. *Plans & Billing → Spend limit* — set a monthly cap (e.g. $50). With
+For Anthropic (the backwards-compatible default), set:
+```
+RANKING_PROVIDER=anthropic
+ANTHROPIC_API_KEY=
+```
+
+For the OpenAI Agents SDK path, set:
+```
+RANKING_PROVIDER=openai
+OPENAI_API_KEY=
+```
+
+Set a provider-side spend cap. With
    the per-login daily lock + spend cap, runaway cost is impossible.
 
 ---
@@ -123,7 +133,7 @@ pnpm start
 **Troubleshooting mode:** set `AGENT_MODE=mock` in `.env.local`, restart,
 and `/api/rate` still writes real DB rows but the grader returns a
 deterministic fake rating per login. Good for wiring + UI work without
-burning Anthropic credits.
+burning provider credits.
 
 ---
 
