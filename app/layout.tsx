@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono, Press_Start_2P, VT323 } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Scanlines } from "@/components/arcade/scanlines";
 import { ZoralBanner } from "@/components/zoral/banner";
+import { ReferralTracker } from "@/components/referrals/referral-tracker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,6 +48,9 @@ export default function RootLayout({
       <body className="relative min-h-full flex flex-col overflow-x-hidden bg-arcade-cream text-arcade-ink dark:bg-arcade-dark dark:text-arcade-cream">
         <Scanlines />
         <ZoralBanner />
+        <Suspense fallback={null}>
+          <ReferralTracker />
+        </Suspense>
         {children}
         <Analytics />
       </body>

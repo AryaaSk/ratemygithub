@@ -174,6 +174,8 @@ function mockVibes(): DailyVibes {
 }
 
 export type ProfileData = RatedUser & {
+  /** Present for persisted ratings; omitted by deterministic mock fixtures. */
+  ratingId?: string;
   rank: number;
   percentile: number;
   /** 365 for GraphQL-sourced heatmap, 90 for events fallback, undefined for mocks. */
@@ -232,6 +234,7 @@ export async function profileData(loginParam: string): Promise<ProfileData | nul
   const tier = tierForScore(rating.score).tier;
 
   const profile: ProfileData = {
+    ratingId: rating.id,
     login: userRow.displayLogin,
     name: userRow.name ?? userRow.displayLogin,
     avatar: userRow.avatarUrl ?? `https://github.com/${userRow.displayLogin}.png`,

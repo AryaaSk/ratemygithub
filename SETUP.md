@@ -35,7 +35,9 @@ browser.
    SUPABASE_SERVICE_ROLE_KEY=<service_role>
    ```
 3. *Settings → Database → Connection string → URI → Transaction pooler (6543)*. Copy → `DATABASE_URL`.
-4. *SQL Editor* → paste the contents of `drizzle/0000_init.sql` → *Run*. Creates tables, indexes, and the Realtime publication.
+4. *SQL Editor* → run `drizzle/0000_init.sql`, followed by
+   `drizzle/0001_referrals.sql`. This creates the core tables, referral
+   attribution tables/view, indexes, and the Realtime publication.
 
 Free tier (500 MB DB + 2 GB egress) is plenty.
 
@@ -201,7 +203,18 @@ Watch the row land in Supabase → Table Editor → `ratings`.
 
 ---
 
-## 11 · Viral-play checklist (pre-YC HQ field trip)
+## 11 · Referral reporting
+
+Use tagged links such as `https://ratemygithub.com/?ref=x_launch_post`.
+Unknown valid IDs auto-register on their first page view. Supabase exposes
+aggregated page views, converting visits, rating totals, and conversion rate in
+the `referral_performance` view. Join `referral_visits.id` to
+`ratings.referral_visit_id` to inspect every rating produced by one exact page
+view.
+
+---
+
+## 12 · Viral-play checklist (pre-YC HQ field trip)
 
 - [ ] Prize decided (Zoral hoodie / sticker / $50 gift card — pick one)
 - [ ] OG share card renders correctly when pasted into X compose (`/api/og/<login>`)

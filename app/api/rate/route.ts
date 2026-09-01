@@ -14,6 +14,8 @@ import { checkIpLimit, checkLoginLimit } from "@/lib/ratelimit";
 import { verifyTurnstile } from "@/lib/turnstile";
 import { runAgent } from "@/lib/agent/run";
 import { db, schema } from "@/lib/db/client";
+import { resolveActiveReferralVisit } from "@/lib/referrals/server";
+import { REFERRAL_COOKIE_NAME } from "@/lib/referrals/shared";
 
 export const runtime = "nodejs";
 // 300s is the Vercel Pro ceiling. Our p50 is ~75s and p95 is ~105s, so we
@@ -273,6 +275,19 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Attribution must never block a paid scoring run. Resolve the HTTP-only
+    // visit cookie before scoring and fall back to NULL on any analytics error.
+    let referralVisitId: string | null = null;
+    try {
+      referralVisitId = await resolveActiveReferralVisit(
+        req.cookies.get(REFERRAL_COOKIE_NAME)?.value,
+      );
+    } catch (error) {
+      console.warn(
+        `[rmg] referral attribution lookup failed: ${(error as Error).message}`,
+      );
+    }
+
     const { rating, heatmapWindowDays } = await runAgent(loginKey);
     const [row] = await db()
       .insert(schema.ratings)
@@ -289,6 +304,7 @@ export async function POST(req: NextRequest) {
         timeline: rating.timeline,
         totals: rating.totals,
         heatmapWindowDays,
+        referralVisitId,
         rubricVersion: rating.rubricVersion,
       })
       .returning({ id: schema.ratings.id });

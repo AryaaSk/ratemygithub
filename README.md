@@ -177,6 +177,20 @@ User-supplied usernames flow into an LLM-driven pipeline, so validation matters.
 
 See [`lib/github/validate.ts`](lib/github/validate.ts) and [`lib/agent/wrap-untrusted.ts`](lib/agent/wrap-untrusted.ts) for the perimeter.
 
+## Referral attribution
+
+Tagged links use `?ref=<id>`, for example
+`https://ratemygithub.com/?ref=x_launch_post`. Valid IDs are normalized to
+lowercase URL-safe strings. Each tagged arrival creates a page-view row and a
+30-day last-touch cookie; ratings made during that window link to the exact
+visit. A newer tagged link replaces the attribution, while untagged visits do
+not clear it.
+
+The Share on X button creates a unique registered referral tied to its source
+rating and places that token in the shared URL. This records share intent, not
+confirmed X publication. Referral reporting is available in Supabase through
+the `referral_performance` view after running `drizzle/0001_referrals.sql`.
+
 ## Cost + latency budget
 
 Per rating, typical profile (6 recent repos):

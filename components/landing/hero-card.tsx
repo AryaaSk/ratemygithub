@@ -7,6 +7,7 @@ import { PixelButton } from "@/components/arcade/pixel-button";
 import { UsernameInput, isValidGithubLogin } from "@/components/forms/username-input";
 import { EmailInput } from "@/components/forms/email-input";
 import { ConfirmModal } from "@/components/forms/confirm-modal";
+import { captureReferralFromLocation } from "@/lib/referrals/client";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -69,6 +70,9 @@ export function HeroCard() {
   async function submit() {
     setPhase({ kind: "scoring", login, startedAt: Date.now() });
     try {
+      // Make last-touch attribution deterministic even if the user submits
+      // immediately after landing and the background capture is still pending.
+      await captureReferralFromLocation();
       const res = await fetch("/api/rate", {
         method: "POST",
         headers: { "content-type": "application/json" },

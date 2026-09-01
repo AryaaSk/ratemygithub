@@ -62,6 +62,7 @@ export default async function ProfilePage({
           ← RATE MY GITHUB
         </Link>
         <ShareCardButton
+          ratingId={u.ratingId}
           login={u.login}
           score={u.score}
           tier={u.tier}
