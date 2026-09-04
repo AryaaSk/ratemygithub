@@ -32,6 +32,12 @@ export function LeaderboardRow({
         : rank === 3
           ? "text-arcade-green-deep"
           : "text-arcade-ink/60 dark:text-arcade-cream/60";
+  const rankWidth =
+    rank >= 1000
+      ? "w-[4.5rem] sm:w-20"
+      : rank >= 100
+        ? "w-12 sm:w-[3.75rem]"
+        : "w-8 sm:w-10";
 
   return (
     <Link
@@ -44,7 +50,8 @@ export function LeaderboardRow({
     >
       <span
         className={cn(
-          "font-pixel text-base sm:text-lg text-right tabular-nums w-8 sm:w-10 shrink-0",
+          "font-pixel text-base sm:text-lg text-right tabular-nums shrink-0",
+          rankWidth,
           rankColor,
         )}
       >
